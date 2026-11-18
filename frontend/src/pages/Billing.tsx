@@ -2,10 +2,18 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { runBilling, fetchInvoices } from '../api/billing'
+import { ApiError } from '../api/client'
 
 function currentMonth() {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+function runErrorMessage(error: Error): string {
+  if (error instanceof ApiError && typeof error.data.month === 'string') {
+    return error.data.month
+  }
+  return 'Billing run failed. Please try again.'
 }
 
 export default function Billing() {
@@ -27,8 +35,8 @@ export default function Billing() {
       setRunError(null)
       invoicesQuery.refetch()
     },
-    onError: () => {
-      setRunError('Billing run failed. Please try again.')
+    onError: (error) => {
+      setRunError(runErrorMessage(error))
       setRunResult(null)
     },
   })
@@ -101,17 +109,27 @@ export default function Billing() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">Invoice ID</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Invoice</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Freelancer</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Period</th>
+                  <th className="text-right px-4 py-3 font-medium text-slate-600">Total</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {invoicesQuery.data.map((inv) => (
-                  <tr key={String(inv.id)}>
-                    <td className="px-4 py-3 text-slate-700">{String(inv.id)}</td>
+                  <tr key={inv.id}>
+                    <td className="px-4 py-3 text-slate-700">#{inv.id}</td>
+                    <td className="px-4 py-3 text-slate-700">{inv.freelancer.name}</td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {inv.period_start} – {inv.period_end}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-700">
+                      £{Number(inv.total).toFixed(2)}
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        to={`/billing/invoices/${String(inv.id)}`}
+                        to={`/billing/invoices/${inv.id}`}
                         className="text-indigo-600 hover:text-indigo-800 font-medium"
                       >
                         View →

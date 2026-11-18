@@ -1,0 +1,13 @@
+{% autoescape off %}Invoice {{ invoice.pk }}
+
+From: {{ invoice.freelancer.name }}
+To: {{ invoice.company.name }}
+Period: {{ invoice.period_start|date:"j F Y" }} to {{ invoice.period_end|date:"j F Y" }}
+
+Date          Hours   Day rate
+{% for line in lines %}{{ line.date|date:"Y-m-d" }}    {{ line.hours }}    {{ line.daily_rate }}
+{% endfor %}
+Total: {{ invoice.total }}
+
+Each day worked is billed at the contract's day rate.
+{% endautoescape %}
